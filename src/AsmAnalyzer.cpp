@@ -1,4 +1,4 @@
-#include "gbasm_to_c/AsmAnalyzer.h"
+#include "AsmAnalyzer.h"
 #include <algorithm>
 
 namespace GBAsm {

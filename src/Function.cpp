@@ -1,4 +1,4 @@
-#include "gbasm_to_c/Function.h"
+#include "Function.h"
 
 namespace GBAsm {
 

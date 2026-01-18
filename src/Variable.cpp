@@ -1,4 +1,4 @@
-#include "gbasm_to_c/Variable.h"
+#include "Variable.h"
 #include <cctype>
 
 namespace GBAsm {

@@ -1,4 +1,4 @@
-#include "gbasm_to_c/Instruction.h"
+#include "Instruction.h"
 #include <algorithm>
 #include <cctype>
 

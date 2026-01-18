@@ -1,4 +1,4 @@
-#include "gbasm_to_c/AsmParser.h"
+#include "AsmParser.h"
 #include <sstream>
 #include <algorithm>
 #include <cctype>

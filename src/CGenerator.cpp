@@ -1,4 +1,4 @@
-#include "gbasm_to_c/CGenerator.h"
+#include "CGenerator.h"
 #include <sstream>
 #include <algorithm>
 #include <cctype>

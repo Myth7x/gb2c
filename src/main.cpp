@@ -1,4 +1,4 @@
-#include "gbasm_to_c/Converter.h"
+#include "Converter.h"
 #include <iostream>
 #include <fstream>
 #include <filesystem>
