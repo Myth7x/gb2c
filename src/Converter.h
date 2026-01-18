@@ -18,6 +18,13 @@ public:
     const std::vector<Function>& GetFunctions() const;
     const std::map<std::string, Variable>& GetVariables() const;
     
+    // Reference tracking API
+    std::map<std::string, FunctionInfo> GetFunctionReferences() const;
+    std::map<std::string, VariableInfo> GetVariableReferences() const;
+    std::string FormatFunctionReferences() const;
+    std::string FormatVariableReferences() const;
+    std::string FormatAllReferences() const;
+    
 private:
     AsmParser m_parser;
     AsmAnalyzer m_analyzer;

@@ -95,6 +95,26 @@ const std::map<std::string, Variable>& Converter::GetVariables() const {
     return m_analyzer.GetVariables();
 }
 
+std::map<std::string, FunctionInfo> Converter::GetFunctionReferences() const {
+    return m_analyzer.GetFunctionReferences();
+}
+
+std::map<std::string, VariableInfo> Converter::GetVariableReferences() const {
+    return m_analyzer.GetVariableReferences();
+}
+
+std::string Converter::FormatFunctionReferences() const {
+    return m_analyzer.FormatFunctionReferences();
+}
+
+std::string Converter::FormatVariableReferences() const {
+    return m_analyzer.FormatVariableReferences();
+}
+
+std::string Converter::FormatAllReferences() const {
+    return m_analyzer.FormatAllReferences();
+}
+
 const Function* Converter::FindFunctionAtLine(int lineNumber) const {
     const auto& functions = m_analyzer.GetFunctions();
     

@@ -5,6 +5,7 @@
 #include "Variable.h"
 #include <vector>
 #include <map>
+#include <set>
 #include <string>
 
 namespace GBAsm {
@@ -19,6 +20,26 @@ struct MacroDefinition {
         : name(n), paramCount(pc), definition(def) {}
 };
 
+struct Reference {
+    std::string location;  // Function or file where referenced
+    int lineNumber;
+    std::string context;   // The line of code where it appears
+    
+    Reference(const std::string& loc, int line, const std::string& ctx)
+        : location(loc), lineNumber(line), context(ctx) {}
+};
+
+struct FunctionInfo {
+    Function function;
+    std::vector<Reference> calledFrom;  // Where this function is called
+    std::vector<std::string> calls;     // Functions this one calls
+};
+
+struct VariableInfo {
+    Variable variable;
+    std::vector<Reference> usedIn;      // Where this variable is used
+};
+
 class AsmAnalyzer {
 public:
     AsmAnalyzer();
@@ -30,10 +51,20 @@ public:
     const std::map<std::string, Variable>& GetVariables() const;
     const std::map<std::string, MacroDefinition>& GetMacros() const;
     
+    // New: Get detailed information with references
+    std::map<std::string, FunctionInfo> GetFunctionReferences() const;
+    std::map<std::string, VariableInfo> GetVariableReferences() const;
+    
+    // New: Format reference information as string
+    std::string FormatFunctionReferences() const;
+    std::string FormatVariableReferences() const;
+    std::string FormatAllReferences() const;
+    
 private:
     void FindVariables();
     void FindFunctions();
     void FindMacros();
+    void AnalyzeReferences();
     
     void RegisterVariable(const std::string& name, const Variable& var);
     void RegisterMacro(const std::string& name, const MacroDefinition& macro);
@@ -42,6 +73,10 @@ private:
     std::vector<Function> m_functions;
     std::map<std::string, Variable> m_variables;
     std::map<std::string, MacroDefinition> m_macros;
+    
+    // Reference tracking
+    std::map<std::string, FunctionInfo> m_functionRefs;
+    std::map<std::string, VariableInfo> m_variableRefs;
 };
 
 } // namespace GBAsm

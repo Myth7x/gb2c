@@ -1,5 +1,6 @@
 #include "AsmAnalyzer.h"
 #include <algorithm>
+#include <sstream>
 
 namespace GBAsm {
 
@@ -11,10 +12,13 @@ void AsmAnalyzer::Analyze(const std::vector<Instruction>& instructions) {
     m_functions.clear();
     m_variables.clear();
     m_macros.clear();
+    m_functionRefs.clear();
+    m_variableRefs.clear();
     
     FindVariables();
     FindFunctions();
     FindMacros();
+    AnalyzeReferences();
 }
 
 const std::vector<Function>& AsmAnalyzer::GetFunctions() const {
@@ -131,6 +135,136 @@ void AsmAnalyzer::FindMacros() {
             }
         }
     }
+}
+
+void AsmAnalyzer::AnalyzeReferences() {
+    // Initialize function references
+    for (const auto& func : m_functions) {
+        FunctionInfo info;
+        info.function = func;
+        m_functionRefs[func.name] = info;
+    }
+    
+    // Initialize variable references
+    for (const auto& [name, var] : m_variables) {
+        VariableInfo info;
+        info.variable = var;
+        m_variableRefs[name] = info;
+    }
+    
+    // Analyze each function for calls and variable usage
+    for (const auto& func : m_functions) {
+        for (const auto& inst : func.instructions) {
+            // Track function calls
+            if (inst.IsCall() && !inst.operands.empty()) {
+                std::string calledFunc = inst.operands[0].value;
+                if (m_functionRefs.find(calledFunc) != m_functionRefs.end()) {
+                    // Add to this function's call list
+                    m_functionRefs[func.name].calls.push_back(calledFunc);
+                    
+                    // Add reference to the called function
+                    m_functionRefs[calledFunc].calledFrom.push_back(
+                        Reference(func.name, inst.lineNumber, inst.mnemonic + " " + calledFunc));
+                }
+            }
+            
+            // Track variable usage
+            for (const auto& operand : inst.operands) {
+                if (operand.IsHardwareReg() || operand.IsHighRAM() || operand.IsMemory()) {
+                    if (m_variableRefs.find(operand.value) != m_variableRefs.end()) {
+                        m_variableRefs[operand.value].usedIn.push_back(
+                            Reference(func.name, inst.lineNumber, inst.mnemonic));
+                    }
+                }
+            }
+        }
+    }
+}
+
+std::map<std::string, FunctionInfo> AsmAnalyzer::GetFunctionReferences() const {
+    return m_functionRefs;
+}
+
+std::map<std::string, VariableInfo> AsmAnalyzer::GetVariableReferences() const {
+    return m_variableRefs;
+}
+
+std::string AsmAnalyzer::FormatFunctionReferences() const {
+    std::ostringstream output;
+    output << "=== FUNCTION REFERENCE REPORT ===\n\n";
+    output << "Total Functions: " << m_functionRefs.size() << "\n\n";
+    
+    for (const auto& [name, info] : m_functionRefs) {
+        output << "Function: " << name << "\n";
+        output << "  Return Type: " << info.function.returnType << "\n";
+        output << "  Lines: " << info.function.startLine << "-" << info.function.endLine << "\n";
+        output << "  Instructions: " << info.function.instructions.size() << "\n";
+        
+        if (!info.calls.empty()) {
+            output << "  Calls (" << info.calls.size() << "):\n";
+            for (const auto& call : info.calls) {
+                output << "    - " << call << "\n";
+            }
+        }
+        
+        if (!info.calledFrom.empty()) {
+            output << "  Called From (" << info.calledFrom.size() << " locations):\n";
+            for (const auto& ref : info.calledFrom) {
+                output << "    - " << ref.location << " (line " << ref.lineNumber << ")\n";
+            }
+        } else {
+            output << "  Called From: (none - possibly unused or entry point)\n";
+        }
+        
+        output << "\n";
+    }
+    
+    return output.str();
+}
+
+std::string AsmAnalyzer::FormatVariableReferences() const {
+    std::ostringstream output;
+    output << "=== VARIABLE REFERENCE REPORT ===\n\n";
+    output << "Total Variables: " << m_variableRefs.size() << "\n\n";
+    
+    for (const auto& [name, info] : m_variableRefs) {
+        output << "Variable: " << name << "\n";
+        output << "  Type: " << info.variable.cType;
+        if (info.variable.isVolatile) output << " (volatile)";
+        if (info.variable.isArray) output << "[" << info.variable.arraySize << "]";
+        output << "\n";
+        
+        if (!info.usedIn.empty()) {
+            output << "  Used In (" << info.usedIn.size() << " locations):\n";
+            // Group by function
+            std::map<std::string, int> usageCount;
+            for (const auto& ref : info.usedIn) {
+                usageCount[ref.location]++;
+            }
+            for (const auto& [func, count] : usageCount) {
+                output << "    - " << func << " (" << count << " times)\n";
+            }
+        } else {
+            output << "  Used In: (none - possibly unused)\n";
+        }
+        
+        output << "\n";
+    }
+    
+    return output.str();
+}
+
+std::string AsmAnalyzer::FormatAllReferences() const {
+    std::ostringstream output;
+    output << "=== COMPLETE REFERENCE ANALYSIS ===\n\n";
+    output << "Total Functions: " << m_functionRefs.size() << "\n";
+    output << "Total Variables: " << m_variableRefs.size() << "\n";
+    output << "Total Macros: " << m_macros.size() << "\n\n";
+    
+    output << FormatFunctionReferences();
+    output << "\n" << FormatVariableReferences();
+    
+    return output.str();
 }
 
 } // namespace GBAsm

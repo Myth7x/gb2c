@@ -1,6 +1,7 @@
 #include "Converter.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <filesystem>
 #include <vector>
 #include <string>
@@ -12,6 +13,9 @@ struct Options {
     std::string outputDir = "output";
     bool verbose = false;
     bool showHelp = false;
+    bool showReferences = false;
+    bool showFunctionsOnly = false;
+    bool showVariablesOnly = false;
 };
 
 void PrintUsage(const char* programName) {
@@ -22,11 +26,17 @@ void PrintUsage(const char* programName) {
     std::cout << "Options:\n";
     std::cout << "  -o, --output <dir>   Output directory for .c files (default: 'output')\n";
     std::cout << "  -v, --verbose        Enable verbose output\n";
+    std::cout << "  -r, --references     Show function and variable reference analysis\n";
+    std::cout << "  -f, --functions      Show function references only\n";
+    std::cout << "  -var, --variables    Show variable references only\n";
     std::cout << "  -h, --help           Show this help message\n\n";
     std::cout << "Examples:\n";
     std::cout << "  " << programName << " joypad.asm\n";
     std::cout << "  " << programName << " -o converted engine/battle\n";
-    std::cout << "  " << programName << " -v -o out core.asm\n\n";
+    std::cout << "  " << programName << " -v -o out core.asm\n";
+    std::cout << "  " << programName << " -r core.asm                  (show all references)\n";
+    std::cout << "  " << programName << " -f core.asm                  (show function references)\n";
+    std::cout << "  " << programName << " -var core.asm                (show variable references)\n\n";
     std::cout << "Note: To build as library or executable, use CMake:\n";
     std::cout << "  Library:    cmake .. -DBUILD_CLI=OFF\n";
     std::cout << "  Executable: cmake .. -DBUILD_CLI=ON (default)\n";
@@ -43,6 +53,12 @@ Options ParseCommandLine(int argc, char* argv[]) {
             return opts;
         } else if (arg == "-v" || arg == "--verbose") {
             opts.verbose = true;
+        } else if (arg == "-r" || arg == "--references") {
+            opts.showReferences = true;
+        } else if (arg == "-f" || arg == "--functions") {
+            opts.showFunctionsOnly = true;
+        } else if (arg == "-var" || arg == "--variables") {
+            opts.showVariablesOnly = true;
         } else if (arg == "-o" || arg == "--output") {
             if (i + 1 < argc) {
                 opts.outputDir = argv[++i];
@@ -99,9 +115,9 @@ std::string GetOutputFileName(const fs::path& inputPath) {
     return filename + ".c";
 }
 
-bool ConvertFile(const fs::path& inputPath, const fs::path& outputPath, bool verbose) {
+bool ConvertFile(const fs::path& inputPath, const fs::path& outputPath, const Options& opts) {
     try {
-        if (verbose) {
+        if (opts.verbose) {
             std::cout << "Converting: " << inputPath.filename().string() << " -> " 
                       << outputPath.filename().string() << std::endl;
         }
@@ -109,7 +125,7 @@ bool ConvertFile(const fs::path& inputPath, const fs::path& outputPath, bool ver
 
         std::string asmSource = ReadFile(inputPath);
         
-        if (verbose) {
+        if (opts.verbose) {
             std::cout << "  Input size: " << asmSource.length() << " bytes" << std::endl;
         }
         
@@ -124,10 +140,19 @@ bool ConvertFile(const fs::path& inputPath, const fs::path& outputPath, bool ver
         const auto& functions = converter.GetFunctions();
         const auto& variables = converter.GetVariables();
         
-        if (verbose) {
+        if (opts.verbose) {
             std::cout << "  Functions found: " << functions.size() << std::endl;
             std::cout << "  Variables found: " << variables.size() << std::endl;
             std::cout << "  Output size: " << cCode.length() << " bytes" << std::endl;
+        }
+        
+        // Show reference analysis if requested
+        if (opts.showReferences) {
+            std::cout << "\n" << converter.FormatAllReferences() << std::endl;
+        } else if (opts.showFunctionsOnly) {
+            std::cout << "\n" << converter.FormatFunctionReferences() << std::endl;
+        } else if (opts.showVariablesOnly) {
+            std::cout << "\n" << converter.FormatVariableReferences() << std::endl;
         }
         
         std::cout << "✓ " << inputPath.filename().string() << " converted successfully" << std::endl;
@@ -140,7 +165,7 @@ bool ConvertFile(const fs::path& inputPath, const fs::path& outputPath, bool ver
     }
 }
 
-int ProcessDirectory(const fs::path& inputDir, const fs::path& outputDir, bool verbose) {
+int ProcessDirectory(const fs::path& inputDir, const fs::path& outputDir, const Options& opts) {
     if (!fs::exists(inputDir)) {
         std::cerr << "Error: Input directory does not exist: " << inputDir << std::endl;
         return 1;
@@ -181,7 +206,7 @@ int ProcessDirectory(const fs::path& inputDir, const fs::path& outputDir, bool v
 
         fs::create_directories(outputPath.parent_path());
         
-        if (ConvertFile(asmFile, outputPath, verbose)) {
+        if (ConvertFile(asmFile, outputPath, opts)) {
             successCount++;
         } else {
             failCount++;
@@ -196,7 +221,7 @@ int ProcessDirectory(const fs::path& inputDir, const fs::path& outputDir, bool v
     return failCount > 0 ? 1 : 0;
 }
 
-int ProcessFile(const fs::path& inputFile, const fs::path& outputDir, bool verbose) {
+int ProcessFile(const fs::path& inputFile, const fs::path& outputDir, const Options& opts) {
     if (!fs::exists(inputFile)) {
         std::cerr << "Error: Input file does not exist: " << inputFile << std::endl;
         return 1;
@@ -221,7 +246,7 @@ int ProcessFile(const fs::path& inputFile, const fs::path& outputDir, bool verbo
     std::cout << "Input file: " << fs::absolute(inputFile) << std::endl;
     std::cout << "Output directory: " << fs::absolute(outputDir) << "\n" << std::endl;
     
-    return ConvertFile(inputFile, outputPath, verbose) ? 0 : 1;
+    return ConvertFile(inputFile, outputPath, opts) ? 0 : 1;
 }
 
 int main(int argc, char* argv[]) {
@@ -240,9 +265,9 @@ int main(int argc, char* argv[]) {
         fs::path outputDir(opts.outputDir);
         
         if (fs::is_directory(inputPath)) {
-            return ProcessDirectory(inputPath, outputDir, opts.verbose);
+            return ProcessDirectory(inputPath, outputDir, opts);
         } else {
-            return ProcessFile(inputPath, outputDir, opts.verbose);
+            return ProcessFile(inputPath, outputDir, opts);
         }
         
     } catch (const std::exception& e) {
