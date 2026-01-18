@@ -5,3 +5,7 @@ A C++23 library and command-line tool for converting Game Boy (Z80/RGBASM) assem
 ## Description
 
 This library is a submodule of the PoryTools project and provides functionality for parsing and converting Game Boy assembly code to C code.
+
+## Knowledge Base
+
+- **Pan Docu from gbdev.io**: https://gbdev.io/pandocs/
