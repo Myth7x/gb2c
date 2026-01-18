@@ -83,4 +83,38 @@ RegisterType Instruction::ParseRegisterName(const std::string& regName) {
     return RegisterType::A; // Default fallback
 }
 
+bool Instruction::IsMacro(const std::string& mnemonic) {
+    std::string lower = ToLower(mnemonic);
+    
+    // Common Game Boy assembly macros
+    static const std::vector<std::string> knownMacros = {
+        // Coordinate/screen macros
+        "hlcoord", "dwcoord", "bccoord", "decoord",
+        // Far call/jump macros
+        "callfar", "farcall", "jpfar", "homecall",
+        // Text macros
+        "text_far", "text_end", "text_start", "text_asm",
+        // Load byte macros
+        "lb", "ld16",
+        // Predefined function macros
+        "predef", "coord",
+        // Other common macros
+        "db", "dw", "ds", "def", "equ", "const",
+        "tx_pre", "tx_start", "tx_end",
+        "call_asm", "call_text",
+        "sine_wave", "percent",
+        // Battle engine macros
+        "anim_wait", "anim_obj",
+        "battle_text", "battle_anim"
+    };
+    
+    for (const auto& macro : knownMacros) {
+        if (lower == macro) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 } // namespace GBAsm

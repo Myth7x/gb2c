@@ -24,7 +24,17 @@ std::string Converter::ConvertToC(const std::string& asmSource) {
     output << "#include <stdint.h>\n";
     output << "#include <stdbool.h>\n\n";
     
-
+    // Generate macro definitions
+    const auto& macros = m_analyzer.GetMacros();
+    if (!macros.empty()) {
+        output << "// Macro definitions\n";
+        for (const auto& [name, macro] : macros) {
+            output << macro.definition << "\n";
+        }
+        output << "\n";
+    }
+    
+    // Generate global variables
     const auto& variables = m_analyzer.GetVariables();
     if (!variables.empty()) {
         output << "// Global variables\n";
@@ -32,7 +42,7 @@ std::string Converter::ConvertToC(const std::string& asmSource) {
         output << "\n";
     }
     
-
+    // Generate function forward declarations
     const auto& functions = m_analyzer.GetFunctions();
     if (!functions.empty()) {
         output << "// Forward declarations\n";
@@ -42,7 +52,7 @@ std::string Converter::ConvertToC(const std::string& asmSource) {
         output << "\n";
     }
     
-
+    // Generate function implementations
     for (const auto& func : functions) {
         output << m_generator.Generate(func, variables) << "\n";
     }

@@ -80,6 +80,18 @@ std::string CGenerator::GenerateFunctionBody(const Function& func,
             continue;
         }
         
+        if (inst.type == InstructionType::Macro) {
+            std::string macroCall = TranslateMacroCall(inst, state, variables);
+            if (!macroCall.empty()) {
+                output << "    " << macroCall;
+                if (!inst.comment.empty()) {
+                    output << " // " << inst.comment;
+                }
+                output << "\n";
+            }
+            continue;
+        }
+        
         std::string translated = TranslateInstruction(inst, state, variables);
         if (!translated.empty()) {
             output << "    " << translated;
@@ -509,6 +521,71 @@ std::string CGenerator::TranslateMisc(const Instruction& inst,
     }
     
     return "/* " + inst.mnemonic + " */";
+}
+
+std::string CGenerator::TranslateMacroCall(const Instruction& inst,
+                                          RegisterState& state,
+                                          const std::map<std::string, Variable>& variables) {
+    std::string mnemonic = inst.mnemonic;
+    std::transform(mnemonic.begin(), mnemonic.end(), mnemonic.begin(), ::tolower);
+    
+    // Build operand list
+    std::vector<std::string> operands;
+    for (const auto& op : inst.operands) {
+        operands.push_back(TranslateOperand(op, state, variables));
+    }
+    
+    // Generate macro call based on type
+    if (mnemonic == "hlcoord" || mnemonic == "dwcoord" || 
+        mnemonic == "bccoord" || mnemonic == "decoord") {
+        if (operands.size() >= 2) {
+            std::string reg = mnemonic.substr(0, 2);
+            if (reg == "hl") reg = "hl";
+            else if (reg == "dw") reg = "hl";
+            else if (reg == "bc") reg = "bc";
+            else if (reg == "de") reg = "de";
+            return reg + " = " + mnemonic + "(" + operands[0] + ", " + operands[1] + ");";
+        }
+    } else if (mnemonic == "lb") {
+        if (operands.size() >= 3) {
+            return "lb(" + operands[0] + ", " + operands[1] + ", " + operands[2] + ");";
+        }
+    } else if (mnemonic == "callfar" || mnemonic == "farcall") {
+        if (!operands.empty()) {
+            return "callfar(" + operands[0] + ");";
+        }
+    } else if (mnemonic == "jpfar") {
+        if (!operands.empty()) {
+            return "jpfar(" + operands[0] + ");";
+        }
+    } else if (mnemonic == "homecall") {
+        if (!operands.empty()) {
+            return "homecall(" + operands[0] + ");";
+        }
+    } else if (mnemonic == "predef") {
+        if (!operands.empty()) {
+            return "predef(" + operands[0] + ");";
+        }
+    } else if (mnemonic == "text_far") {
+        if (!operands.empty()) {
+            return "text_far(" + operands[0] + ");";
+        }
+    } else if (mnemonic == "text_end") {
+        return "text_end();";
+    } else if (mnemonic == "text_start") {
+        return "text_start();";
+    }
+    
+    // Generic macro handling - build macro_name(args)
+    std::ostringstream call;
+    call << mnemonic << "(";
+    for (size_t i = 0; i < operands.size(); i++) {
+        if (i > 0) call << ", ";
+        call << operands[i];
+    }
+    call << ");";
+    
+    return call.str();
 }
 
 std::string CGenerator::TranslateOperand(const Operand& operand,

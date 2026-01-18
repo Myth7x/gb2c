@@ -54,6 +54,14 @@ Instruction AsmParser::ParseLine(const std::string& line, int lineNumber) {
     }
     
     inst.mnemonic = ExtractMnemonic(cleaned);
+    
+    if (Instruction::IsMacro(inst.mnemonic)) {
+        inst.type = InstructionType::Macro;
+        inst.operands = ExtractOperands(cleaned, inst.mnemonic);
+        inst.comment = ExtractComment(line);
+        return inst;
+    }
+    
     inst.type = Instruction::ClassifyMnemonic(inst.mnemonic);
     inst.operands = ExtractOperands(cleaned, inst.mnemonic);
     inst.comment = ExtractComment(line);

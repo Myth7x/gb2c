@@ -22,8 +22,8 @@ add_library(gbasm_to_c STATIC
 
 target_include_directories(gbasm_to_c
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<INSTALL_INTERFACE:src>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
@@ -38,7 +38,7 @@ endif()
 if(BUILD_CLI)
     add_executable(gbasm2c src/main.cpp)
     target_link_libraries(gbasm2c PRIVATE gbasm_to_c)
-    target_include_directories(gbasm2c PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_include_directories(gbasm2c PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
     
     if(MSVC)
         target_compile_options(gbasm2c PRIVATE /W4)

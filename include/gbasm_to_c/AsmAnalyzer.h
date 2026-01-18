@@ -11,12 +11,13 @@ namespace GBAsm {
 
 struct MacroDefinition {
     std::string name;
-    int paramCount;  // -1 means variadic
-    std::string definition;
+    std::vector<std::string> parameters;
+    std::string expansion;  // C equivalent
+    int paramCount;
     
-    MacroDefinition() : name(""), paramCount(0), definition("") {}
-    MacroDefinition(const std::string& n, int pc, const std::string& def)
-        : name(n), paramCount(pc), definition(def) {}
+    MacroDefinition() : paramCount(0) {}
+    MacroDefinition(const std::string& n, int pc, const std::string& exp) 
+        : name(n), paramCount(pc), expansion(exp) {}
 };
 
 class AsmAnalyzer {
