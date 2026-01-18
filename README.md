@@ -8,4 +8,21 @@ This library is a submodule of the PoryTools project and provides functionality 
 
 ## Knowledge Base
 
-- **Pan Docu from gbdev.io**: https://gbdev.io/pandocs/
+- **Pan Docs from gbdev.io**: https://gbdev.io/pandocs/
+
+## Contributing
+
+Contributions are welcome and encouraged <3!
+
+If you’d like to contribute:
+- Fork the repository
+- Create a feature branch
+- Commit your changes with clear messages
+- Open a pull request describing what you’ve added or fixed
+
+Bug reports, feature requests, documentation improvements, and code contributions are all appreciated.
+
+## License
+
+This project is licensed under the **MIT License**.
+
