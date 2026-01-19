@@ -1,0 +1,119 @@
+name: Windows Build and Test
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test-windows:
+    name: Build and Test on Windows
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+      
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+      
+    - name: Display system information
+      run: |
+        echo "OS: $env:OS"
+        echo "CMake version:"
+        cmake --version
+        echo "MSBuild version:"
+        msbuild -version
+      
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DBUILD_CLI=ON -DBUILD_TESTS=ON
+      
+    - name: Build project
+      run: |
+        cd build
+        cmake --build . --config Release --parallel
+      
+    - name: List build outputs
+      run: |
+        echo "Listing build/Release directory:"
+        dir build\Release
+        if (Test-Path build\Release\test_basic.exe) { echo "✓ test_basic.exe found" } else { echo "✗ test_basic.exe missing" }
+        if (Test-Path build\Release\gbasm2c.exe) { echo "✓ gbasm2c.exe found" } else { echo "✗ gbasm2c.exe missing" }
+      
+    - name: Run unit tests
+      run: |
+        cd build
+        ctest -C Release --output-on-failure --verbose
+      
+    - name: Run individual tests
+      if: always()
+      run: |
+        echo "Running individual tests for detailed output..."
+        cd build\Release
+        
+        echo "=== test_basic ==="
+        .\test_basic.exe
+        
+        echo ""
+        echo "=== test_joypad ==="
+        .\test_joypad.exe
+        
+        echo ""
+        echo "=== test_playtime ==="
+        .\test_playtime.exe
+        
+        echo ""
+        echo "=== test_flag_action ==="
+        .\test_flag_action.exe
+        
+        echo ""
+        echo "=== test_battle_core ==="
+        .\test_battle_core.exe
+      
+    - name: Test CLI executable
+      run: |
+        cd build\Release
+        echo "Testing CLI executable..."
+        .\gbasm2c.exe --help
+        
+        echo ""
+        echo "Testing conversion with core.asm..."
+        if (Test-Path ..\..\tests\core.asm) {
+          .\gbasm2c.exe ..\..\tests\core.asm -o test_output
+          echo "✓ Conversion completed"
+          if (Test-Path test_output\core.c) {
+            echo "✓ Output file generated"
+            $size = (Get-Item test_output\core.c).Length
+            echo "  Output size: $size bytes"
+          } else {
+            echo "✗ Output file not found"
+            exit 1
+          }
+        } else {
+          echo "⚠ core.asm not found, skipping conversion test"
+        }
+      
+    - name: Upload test artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-windows
+        path: |
+          build/Testing/
+          build/Release/*.exe
+        retention-days: 7
+      
+    - name: Upload CLI executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: gbasm2c-windows-x64
+        path: build/Release/gbasm2c.exe
+        retention-days: 30

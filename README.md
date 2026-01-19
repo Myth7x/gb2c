@@ -1,8 +1,11 @@
 # Game Boy Assembly to C Converter Library
 
 <p align="center">
-  <a href="https://github.com/Myth7x/gb2c/actions/workflows/windows.yml?query=branch%3Amain">
-    <img src="https://github.com/Myth7x/gb2c/actions/workflows/windows.yml/badge.svg?branch=main" alt="Windows Build">
+  <a href="https://github.com/Myth7x/gb2c/actions/workflows/windows-build-test.yml?query=branch%3Amaster">
+    <img src="https://github.com/Myth7x/gb2c/actions/workflows/windows-build-test.yml/badge.svg?branch=master" alt="Windows Build">
+  </a>
+  <a href="https://github.com/Myth7x/gb2c/actions/workflows/multi-platform.yml?query=branch%3Amaster">
+    <img src="https://github.com/Myth7x/gb2c/actions/workflows/multi-platform.yml/badge.svg?branch=master" alt="Multi-Platform Build">
   </a>
 </p>
 
