@@ -1,5 +1,9 @@
 # Game Boy Assembly to C Converter Library
 
+<p align="center">
+  <a href="https://github.com/Myth7x/gb2c/actions/workflows/windows.yml?query=branch%3Amain">
+</p>
+
 A C++23 library and command-line tool for converting Game Boy (Z80/RGBASM) assembly code to C code.
 
 ## Description
