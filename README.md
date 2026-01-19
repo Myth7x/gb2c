@@ -2,6 +2,8 @@
 
 <p align="center">
   <a href="https://github.com/Myth7x/gb2c/actions/workflows/windows.yml?query=branch%3Amain">
+    <img src="https://github.com/Myth7x/gb2c/actions/workflows/windows.yml/badge.svg?branch=main" alt="Windows Build">
+  </a>
 </p>
 
 A C++23 library and command-line tool for converting Game Boy (Z80/RGBASM) assembly code to C code.
