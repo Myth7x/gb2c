@@ -43,9 +43,14 @@ jobs:
       
     - name: List build outputs
       run: |
-        echo "Listing build/Release directory:"
+        echo "Listing build directories:"
+        echo "=== build\Release ==="
         dir build\Release
-        if (Test-Path build\Release\test_basic.exe) { echo "✓ test_basic.exe found" } else { echo "✗ test_basic.exe missing" }
+        echo ""
+        echo "=== build\tests\Release ==="
+        dir build\tests\Release
+        echo ""
+        if (Test-Path build\tests\Release\test_basic.exe) { echo "✓ test_basic.exe found" } else { echo "✗ test_basic.exe missing" }
         if (Test-Path build\Release\gbasm2c.exe) { echo "✓ gbasm2c.exe found" } else { echo "✗ gbasm2c.exe missing" }
       
     - name: Run unit tests
@@ -57,7 +62,7 @@ jobs:
       if: always()
       run: |
         echo "Running individual tests for detailed output..."
-        cd build\Release
+        cd build\tests\Release
         
         echo "=== test_basic ==="
         .\test_basic.exe
@@ -108,7 +113,8 @@ jobs:
         name: test-results-windows
         path: |
           build/Testing/
-          build/Release/*.exe
+          build/tests/Release/*.exe
+          build/Release/gbasm2c.exe
         retention-days: 7
       
     - name: Upload CLI executable
