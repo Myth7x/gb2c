@@ -37,8 +37,8 @@ echo "Running Tests"
 echo "========================================"
 echo
 
-# Run tests using CTest
-ctest --output-on-failure -C Release
+# Run tests using CTest with verbose output
+ctest --verbose --output-on-failure -C Release
 TEST_RESULT=$?
 
 echo
