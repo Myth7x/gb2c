@@ -76,7 +76,18 @@ std::string CGenerator::GenerateFunctionBody(const Function& func,
             continue;
         }
         
-        if (inst.type == InstructionType::Label || inst.type == InstructionType::Directive) {
+        // Generate C label for assembly labels (including local labels like .loop, .next)
+        if (inst.type == InstructionType::Label && !inst.label.empty()) {
+            std::string labelName = inst.label;
+            // Remove leading '.' from local labels for C compatibility
+            if (labelName[0] == '.') {
+                labelName = labelName.substr(1);
+            }
+            output << labelName << ":\n";
+            continue;
+        }
+        
+        if (inst.type == InstructionType::Directive) {
             continue;
         }
         
@@ -315,32 +326,57 @@ std::string CGenerator::TranslateJump(const Instruction& inst,
     std::string mnemonic = inst.mnemonic;
     std::transform(mnemonic.begin(), mnemonic.end(), mnemonic.begin(), ::tolower);
     
-    // Check for conditional suffixes
+    // Check for conditional suffixes in mnemonic (e.g., "jpnz", "jrnz")
     bool hasCondition = false;
     std::string condition;
+    std::string target;
     
-    // Check for Z/NZ (Zero flag)
-    if (mnemonic.find("z") != std::string::npos) {
+    // Check if first operand is a condition flag (for syntax like "jr nz, label")
+    if (inst.operands.size() >= 2) {
+        std::string firstOp = inst.operands[0].value;
+        std::transform(firstOp.begin(), firstOp.end(), firstOp.begin(), ::tolower);
+        
+        if (firstOp == "nz") {
+            condition = "!zero";
+            hasCondition = true;
+            target = TranslateOperand(inst.operands[1], state, variables);
+        } else if (firstOp == "z") {
+            condition = "zero";
+            hasCondition = true;
+            target = TranslateOperand(inst.operands[1], state, variables);
+        } else if (firstOp == "nc") {
+            condition = "!carry";
+            hasCondition = true;
+            target = TranslateOperand(inst.operands[1], state, variables);
+        } else if (firstOp == "c") {
+            condition = "carry";
+            hasCondition = true;
+            target = TranslateOperand(inst.operands[1], state, variables);
+        } else {
+            // Not a condition, treat first operand as target
+            target = TranslateOperand(inst.operands[0], state, variables);
+        }
+    } else {
+        // Single operand - check if mnemonic has condition suffix
+        // Check for Z/NZ (Zero flag) in mnemonic
         if (mnemonic.find("nz") != std::string::npos) {
             condition = "!zero";
             hasCondition = true;
-        } else {
+        } else if (mnemonic.find("z") != std::string::npos && mnemonic.find("nz") == std::string::npos) {
             condition = "zero";
             hasCondition = true;
         }
-    }
-    // Check for C/NC (Carry flag)
-    else if (mnemonic.find("c") != std::string::npos) {
-        if (mnemonic.find("nc") != std::string::npos) {
+        // Check for C/NC (Carry flag) in mnemonic
+        else if (mnemonic.find("nc") != std::string::npos) {
             condition = "!carry";
             hasCondition = true;
-        } else {
+        } else if (mnemonic.find("c") != std::string::npos && mnemonic.find("nc") == std::string::npos) {
             condition = "carry";
             hasCondition = true;
         }
+        
+        target = TranslateOperand(inst.operands[0], state, variables);
     }
-    
-    std::string target = TranslateOperand(inst.operands[0], state, variables);
     
     // Determine if it's JP or JR (both handle the same in C)
     if (mnemonic.find("jp") == 0 || mnemonic.find("jr") == 0) {
@@ -601,8 +637,14 @@ std::string CGenerator::TranslateOperand(const Operand& operand,
                 return "*" + operand.value;
             }
             return operand.value;
-        case OperandType::Label:
-            return operand.value;
+        case OperandType::Label: {
+            // Handle label names - remove leading '.' for local labels
+            std::string labelName = operand.value;
+            if (!labelName.empty() && labelName[0] == '.') {
+                labelName = labelName.substr(1);
+            }
+            return labelName;
+        }
         case OperandType::HardwareReg:
         case OperandType::HighRAM:
             return operand.value;

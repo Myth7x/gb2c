@@ -64,15 +64,28 @@ const std::map<std::string, MacroDefinition>& AsmAnalyzer::GetMacros() const {
 void AsmAnalyzer::FindVariables() {
     for (const auto& inst : m_instructions) {
         for (const auto& operand : inst.operands) {
-            if (operand.IsHardwareReg()) {
-                RegisterVariable(operand.value, Variable::CreateHardwareReg(operand.value));
-            } else if (operand.IsHighRAM()) {
-                RegisterVariable(operand.value, Variable::CreateHighRAM(operand.value));
-            } else if (operand.IsMemory() && 
-                      operand.value.find("w") == 0 && 
-                      operand.value.length() > 1 &&
-                      std::isupper(operand.value[1])) {
-                RegisterVariable(operand.value, Variable::CreateMemoryVar(operand.value));
+            // Extract base variable name without arithmetic operations
+            std::string varName = operand.value;
+            
+            // Remove expressions like "+ 1", "- 2", etc. from variable names
+            size_t opPos = varName.find_first_of("+-*/ ");
+            if (opPos != std::string::npos) {
+                varName = varName.substr(0, opPos);
+                // Trim trailing whitespace
+                while (!varName.empty() && std::isspace(varName.back())) {
+                    varName.pop_back();
+                }
+            }
+            
+            if (operand.IsHardwareReg() && !varName.empty()) {
+                RegisterVariable(varName, Variable::CreateHardwareReg(varName));
+            } else if (operand.IsHighRAM() && !varName.empty()) {
+                RegisterVariable(varName, Variable::CreateHighRAM(varName));
+            } else if (operand.IsMemory() && !varName.empty() &&
+                      varName.find("w") == 0 && 
+                      varName.length() > 1 &&
+                      std::isupper(varName[1])) {
+                RegisterVariable(varName, Variable::CreateMemoryVar(varName));
             }
         }
     }

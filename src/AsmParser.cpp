@@ -13,9 +13,33 @@ std::vector<Instruction> AsmParser::Parse(const std::string& source) {
     std::istringstream stream(source);
     std::string line;
     int lineNumber = 0;
+    bool insideMacro = false;
     
     while (std::getline(stream, line)) {
         lineNumber++;
+        
+        // Check if we're entering or leaving a MACRO block
+        std::string trimmed = Trim(line);
+        if (trimmed.find("MACRO") == 0) {
+            insideMacro = true;
+            // Add a comment to indicate MACRO was skipped
+            Instruction inst;
+            inst.lineNumber = lineNumber;
+            inst.type = InstructionType::Comment;
+            inst.comment = "MACRO definition skipped";
+            instructions.push_back(inst);
+            continue;
+        }
+        if (trimmed == "ENDM" || trimmed.find("ENDM") == 0) {
+            insideMacro = false;
+            continue;
+        }
+        
+        // Skip all lines inside MACRO blocks
+        if (insideMacro) {
+            continue;
+        }
+        
         auto inst = ParseLine(line, lineNumber);
         instructions.push_back(inst);
     }
@@ -79,6 +103,11 @@ std::string AsmParser::ExtractLabel(const std::string& line) {
     colonPos = trimmed.find(':');
     if (colonPos != std::string::npos) {
         return Trim(trimmed.substr(0, colonPos));
+    }
+    
+    // Check for local labels without colons (e.g., ".loop" on its own line)
+    if (trimmed[0] == '.' && trimmed.length() > 1 && std::isalpha(trimmed[1])) {
+        return trimmed;
     }
     
     return "";
@@ -181,14 +210,37 @@ Operand AsmParser::ParseOperand(const std::string& operandStr) {
 
 bool AsmParser::IsLabel(const std::string& line) {
     std::string trimmed = Trim(line);
-    return !trimmed.empty() && 
-           (trimmed.find("::") != std::string::npos || trimmed.find(':') != std::string::npos) &&
-           trimmed[0] != ';';
+    if (trimmed.empty() || trimmed[0] == ';') return false;
+    
+    // Check for explicit labels with colons
+    if (trimmed.find("::") != std::string::npos || trimmed.find(':') != std::string::npos) {
+        return true;
+    }
+    
+    // Check for local labels (start with '.' followed by a letter)
+    if (trimmed[0] == '.' && trimmed.length() > 1 && std::isalpha(trimmed[1])) {
+        return true;
+    }
+    
+    return false;
 }
 
 bool AsmParser::IsDirective(const std::string& line) {
     std::string trimmed = Trim(line);
-    return !trimmed.empty() && (trimmed[0] == '.' || trimmed[0] == '#');
+    if (trimmed.empty()) return false;
+    
+    // Check for MACRO definitions (skip entire blocks)
+    if (trimmed.find("MACRO") == 0 || trimmed == "ENDM") {
+        return true;
+    }
+    
+    // Local labels start with '.' followed by a letter - they're not directives
+    if (trimmed[0] == '.' && trimmed.length() > 1 && std::isalpha(trimmed[1])) {
+        return false;
+    }
+    
+    // Other things starting with '.' are directives
+    return trimmed[0] == '.' || trimmed[0] == '#';
 }
 
 bool AsmParser::IsComment(const std::string& line) {

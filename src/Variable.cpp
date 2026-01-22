@@ -30,7 +30,7 @@ std::string Variable::InferTypeFromName(const std::string& name) {
 Variable Variable::CreateHardwareReg(const std::string& name) {
     Variable var;
     var.name = name;
-    var.cType = "volatile uint8_t";
+    var.cType = "uint8_t";
     var.isVolatile = true;
     var.isHardwareReg = true;
     var.isArray = false;

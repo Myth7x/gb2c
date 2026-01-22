@@ -75,15 +75,21 @@ bool Function::IsStartLabel(const Instruction& inst) {
 }
 
 size_t Function::FindEnd(const std::vector<Instruction>& instructions, size_t startIdx) {
+    size_t lastReturn = startIdx;
+    
     for (size_t i = startIdx + 1; i < instructions.size(); i++) {
+        // Track the last return we see
         if (instructions[i].IsReturn()) {
-            return i;
+            lastReturn = i;
         }
+        // Stop when we hit the next function (a non-local label)
         if (IsStartLabel(instructions[i])) {
             return i - 1;
         }
     }
-    return instructions.size() - 1;
+    
+    // If we found any return, use that, otherwise use end of file
+    return lastReturn > startIdx ? lastReturn : instructions.size() - 1;
 }
 
 Function Function::FromInstructions(const std::vector<Instruction>& instructions, 
