@@ -168,6 +168,9 @@ Operand AsmParser::ParseOperand(const std::string& operandStr) {
     } else if (trimmed[0] == 'h' && trimmed.length() > 1 && std::isupper(trimmed[1])) {
         operand.type = OperandType::HighRAM;
         operand.value = trimmed;
+    } else if (trimmed[0] == 'w' && trimmed.length() > 1 && std::isupper(trimmed[1])) {
+        operand.type = OperandType::Memory;
+        operand.value = trimmed;
     } else {
         operand.type = OperandType::Label;
         operand.value = trimmed;

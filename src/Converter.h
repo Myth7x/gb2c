@@ -16,6 +16,7 @@ public:
     std::string ConvertFunction(const std::string& asmSource, int cursorLine);
     
     const std::vector<Function>& GetFunctions() const;
+    const std::set<std::string>& GetFunctionCalls() const;
     const std::map<std::string, Variable>& GetVariables() const;
     
     // Reference tracking API

@@ -39,9 +39,11 @@ void TestJoypadConversion() {
            "Function name should be present");
     
     const auto& functions = converter.GetFunctions();
+    const auto& functionCalls = converter.GetFunctionCalls();
     assert(!functions.empty() && "Should detect at least one function");
     
     std::cout << "  Functions detected: " << functions.size() << "\n";
+    std::cout << "  Function calls detected: " << functionCalls.size() << "\n";
     std::cout << "  Output size: " << result.length() << " bytes\n";
     std::cout << "✓ Joypad test passed\n";
 }

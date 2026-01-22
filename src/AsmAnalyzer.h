@@ -48,6 +48,7 @@ public:
     void Analyze(const std::vector<Instruction>& instructions);
     
     const std::vector<Function>& GetFunctions() const;
+    const std::set<std::string>& GetFunctionCalls() const;
     const std::map<std::string, Variable>& GetVariables() const;
     const std::map<std::string, MacroDefinition>& GetMacros() const;
     
@@ -63,6 +64,7 @@ public:
 private:
     void FindVariables();
     void FindFunctions();
+    void FindFunctionCalls();
     void FindMacros();
     void AnalyzeReferences();
     
@@ -71,6 +73,7 @@ private:
     
     std::vector<Instruction> m_instructions;
     std::vector<Function> m_functions;
+    std::set<std::string> m_functionCalls;
     std::map<std::string, Variable> m_variables;
     std::map<std::string, MacroDefinition> m_macros;
     

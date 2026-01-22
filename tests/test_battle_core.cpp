@@ -73,11 +73,14 @@ void TestBattleCoreConversion() {
     assert(!result.empty() && "Conversion should produce output");
     
     const auto& functions = converter.GetFunctions();
+    const auto& functionCalls = converter.GetFunctionCalls();
     assert(!functions.empty() && "Should detect functions");
+    assert(!functionCalls.empty() && "Should detect function calls");
     
     const auto& variables = converter.GetVariables();
     
     std::cout << "  Functions detected: " << functions.size() << "\n";
+    std::cout << "  Function calls detected: " << functionCalls.size() << "\n";
     std::cout << "  Variables detected: " << variables.size() << "\n";
     std::cout << "  Output size: " << result.length() << " bytes\n";
     

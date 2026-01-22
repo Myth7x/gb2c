@@ -58,6 +58,7 @@ void TestFlagActionConversion() {
            "ResetFlag function should be present");
     
     const auto& functions = converter.GetFunctions();
+    const auto& functionCalls = converter.GetFunctionCalls();
     assert(functions.size() >= 3 && "Should detect at least 3 functions");
     
     // Check for function calls
@@ -65,6 +66,7 @@ void TestFlagActionConversion() {
     assert(!funcRefs.empty() && "Should track function references");
     
     std::cout << "  Functions detected: " << functions.size() << "\n";
+    std::cout << "  Function calls detected: " << functionCalls.size() << "\n";
     std::cout << "  Function references: " << funcRefs.size() << "\n";
     std::cout << "  Output size: " << result.length() << " bytes\n";
     std::cout << "✓ FlagAction test passed\n";

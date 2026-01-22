@@ -40,12 +40,14 @@ void TestPlayTimeConversion() {
            "Function name should be present");
     
     const auto& functions = converter.GetFunctions();
+    const auto& functionCalls = converter.GetFunctionCalls();
     assert(functions.size() >= 1 && "Should detect main function");
     
     const auto& variables = converter.GetVariables();
     assert(variables.size() >= 3 && "Should detect time variables");
     
     std::cout << "  Functions detected: " << functions.size() << "\n";
+    std::cout << "  Function calls detected: " << functionCalls.size() << "\n";
     std::cout << "  Variables detected: " << variables.size() << "\n";
     std::cout << "  Output size: " << result.length() << " bytes\n";
     std::cout << "✓ PlayTime test passed\n";

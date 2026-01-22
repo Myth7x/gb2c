@@ -1,6 +1,8 @@
 #include "AsmAnalyzer.h"
 #include <algorithm>
+#include <iostream>
 #include <sstream>
+#include "defines.h"
 
 namespace GBAsm {
 
@@ -10,6 +12,7 @@ AsmAnalyzer::~AsmAnalyzer() = default;
 void AsmAnalyzer::Analyze(const std::vector<Instruction>& instructions) {
     m_instructions = instructions;
     m_functions.clear();
+    m_functionCalls.clear();
     m_variables.clear();
     m_macros.clear();
     m_functionRefs.clear();
@@ -17,15 +20,40 @@ void AsmAnalyzer::Analyze(const std::vector<Instruction>& instructions) {
     
     FindVariables();
     FindFunctions();
+    FindFunctionCalls();
     FindMacros();
     AnalyzeReferences();
 }
 
 const std::vector<Function>& AsmAnalyzer::GetFunctions() const {
+#ifdef ENABLE_DEBUG_LOGGING
+    std::cout << "=== Function Definitions ==="<< "\n";
+    for (const auto& func : m_functions) {
+        std::cout << "Function defined: " << func.name << " (lines "
+                    << func.startLine << "-" << func.endLine << ")\n";
+    }
+#endif
     return m_functions;
 }
 
+const std::set<std::string>& AsmAnalyzer::GetFunctionCalls() const {
+#ifdef ENABLE_DEBUG_LOGGING
+    std::cout << "=== Function Calls ==="<< "\n";
+    for (const auto& call : m_functionCalls) {
+        std::cout << "Function called: " << call << "\n";
+    }
+#endif
+    return m_functionCalls;
+}
+
 const std::map<std::string, Variable>& AsmAnalyzer::GetVariables() const {
+#ifdef ENABLE_DEBUG_LOGGING
+    std::cout << "=== Variables Found ==="<< "\n";
+    for (const auto& [name, var] : m_variables) {
+        std::cout << "Variable found: " << name << " of type " << var
+                    .cType << (var.isVolatile ? " (volatile)" : "") << "\n";
+    }
+#endif
     return m_variables;
 }
 
@@ -60,6 +88,14 @@ void AsmAnalyzer::FindFunctions() {
                 // Skip to the end of this function to avoid processing instructions twice
                 i = endIdx;
             }
+        }
+    }
+}
+
+void AsmAnalyzer::FindFunctionCalls() {
+    for (const auto& inst : m_instructions) {
+        if (inst.IsCall() && !inst.operands.empty()) {
+            m_functionCalls.insert(inst.operands[0].value);
         }
     }
 }

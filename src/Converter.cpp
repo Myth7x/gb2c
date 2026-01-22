@@ -91,6 +91,10 @@ const std::vector<Function>& Converter::GetFunctions() const {
     return m_analyzer.GetFunctions();
 }
 
+const std::set<std::string>& Converter::GetFunctionCalls() const {
+    return m_analyzer.GetFunctionCalls();
+}
+
 const std::map<std::string, Variable>& Converter::GetVariables() const {
     return m_analyzer.GetVariables();
 }
